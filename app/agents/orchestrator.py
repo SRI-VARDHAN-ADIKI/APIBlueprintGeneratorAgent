@@ -127,10 +127,18 @@ class OrchestratorAgent:
                 "Generating README with AI..."
             )
             
+            # Convert section strings to enum if needed
+            sections = request_data.get('sections', [])
+            if sections and isinstance(sections[0], str):
+                from app.models.request_models import ReadmeSection
+                sections = [ReadmeSection(s) for s in sections]
+            
+            logger.info(f"Generating README with sections: {[s.value if hasattr(s, 'value') else s for s in sections]}")
+            
             readme_result = self.readme_generator.generate_readme(
                 analysis_result,
                 length=request_data.get('length', 'medium'),
-                sections=request_data.get('sections', []),
+                sections=sections,
                 include_examples=request_data.get('include_examples', True),
                 style=request_data.get('style', 'technical'),
                 custom_instructions=request_data.get('custom_instructions')

@@ -114,7 +114,12 @@ class RepoAnalyzerAgent:
             'endpoints': [],
             'models': [],
             'functions': [],
-            'classes': []
+            'classes': [],
+            'endpoint_stats': {
+                'total': 0,
+                'by_method': {},
+                'by_file': {}
+            }
         }
         
         # Analyze Python files
@@ -127,6 +132,14 @@ class RepoAnalyzerAgent:
                     
                     endpoints = parser.extract_endpoints()
                     if endpoints:
+                        # Add relative file path for each endpoint
+                        for endpoint in endpoints:
+                            try:
+                                rel_path = Path(endpoint['file_path']).relative_to(repo_path)
+                                endpoint['file_path'] = str(rel_path)
+                            except:
+                                pass
+                        
                         analysis['endpoints'].extend(endpoints)
                     
                     models = parser.extract_models()
@@ -145,9 +158,37 @@ class RepoAnalyzerAgent:
                     logger.debug(f"Error parsing {file_path}: {e}")
                     continue
         
+        # Calculate endpoint statistics
+        analysis['endpoint_stats'] = self._calculate_endpoint_stats(analysis['endpoints'])
+        
         # TODO: Add JavaScript/TypeScript parser
         # TODO: Add Java parser
         
+        return analysis
+    
+    def _calculate_endpoint_stats(self, endpoints: List[Dict[str, any]]) -> Dict[str, any]:
+        """Calculate statistics about endpoints."""
+        stats = {
+            'total': len(endpoints),
+            'by_method': {},
+            'by_file': {}
+        }
+        
+        for endpoint in endpoints:
+            method = endpoint.get('method', 'UNKNOWN')
+            file_path = endpoint.get('file_path', 'unknown')
+            
+            # Count by HTTP method
+            if method:
+                # Handle multiple methods (Flask style)
+                for m in method.split(', '):
+                    m = m.strip()
+                    stats['by_method'][m] = stats['by_method'].get(m, 0) + 1
+            
+            # Count by file
+            stats['by_file'][file_path] = stats['by_file'].get(file_path, 0) + 1
+        
+        return stats
         return analysis
     
     def _extract_metadata(self, repo_path: Path) -> Dict[str, any]:

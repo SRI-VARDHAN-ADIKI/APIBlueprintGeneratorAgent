@@ -33,75 +33,89 @@ class PythonParser(BaseParser):
         
         endpoints = []
         
-        for node in ast.walk(self.tree):
-            # FastAPI route decorators
-            if isinstance(node, ast.FunctionDef):
+        # Use iter_child_nodes to properly traverse the tree
+        def visit_node(node):
+            # Check both FunctionDef and AsyncFunctionDef
+            if isinstance(node, (ast.FunctionDef, ast.AsyncFunctionDef)):
+                # Check all decorators on this function
                 for decorator in node.decorator_list:
                     endpoint_info = self._parse_decorator(decorator, node)
                     if endpoint_info:
                         endpoints.append(endpoint_info)
+            
+            # Recursively visit child nodes
+            for child in ast.iter_child_nodes(node):
+                visit_node(child)
         
+        # Start visiting from the root
+        visit_node(self.tree)
+        
+        logger.info(f"Extracted {len(endpoints)} endpoints from {self.file_path}")
         return endpoints
     
     def _parse_decorator(self, decorator: ast.expr, func: ast.FunctionDef) -> Optional[Dict[str, any]]:
         """Parse decorator to extract endpoint information."""
         try:
             # FastAPI: @app.get("/path"), @router.post("/path")
-            if isinstance(decorator, ast.Call):
-                if isinstance(decorator.func, ast.Attribute):
-                    method = decorator.func.attr.upper()
+            if isinstance(decorator, ast.Call) and isinstance(decorator.func, ast.Attribute):
+                method = decorator.func.attr.upper()
+                
+                # Check if it's an HTTP method (FastAPI style)
+                if method in ['GET', 'POST', 'PUT', 'DELETE', 'PATCH', 'OPTIONS', 'HEAD']:
+                    path = None
                     
-                    # Check if it's an HTTP method
-                    if method in ['GET', 'POST', 'PUT', 'DELETE', 'PATCH', 'OPTIONS', 'HEAD']:
-                        path = None
-                        
-                        # Extract path from first argument
-                        if decorator.args:
-                            if isinstance(decorator.args[0], ast.Constant):
-                                path = decorator.args[0].value
-                        
-                        if path:
-                            return {
-                                'method': method,
-                                'path': path,
-                                'function_name': func.name,
-                                'parameters': self._extract_function_params(func),
-                                'docstring': ast.get_docstring(func),
-                                'line_number': func.lineno
-                            }
-            
-            # Flask: @app.route("/path", methods=["GET"])
-            elif isinstance(decorator, ast.Call):
-                if isinstance(decorator.func, ast.Attribute):
-                    if decorator.func.attr == 'route':
-                        path = None
-                        methods = ['GET']  # Default
-                        
-                        if decorator.args:
-                            if isinstance(decorator.args[0], ast.Constant):
-                                path = decorator.args[0].value
-                        
-                        # Extract methods from kwargs
-                        for keyword in decorator.keywords:
-                            if keyword.arg == 'methods':
-                                if isinstance(keyword.value, ast.List):
-                                    methods = [
-                                        elt.value for elt in keyword.value.elts
-                                        if isinstance(elt, ast.Constant)
-                                    ]
-                        
-                        if path:
-                            return {
-                                'method': ', '.join(methods),
-                                'path': path,
-                                'function_name': func.name,
-                                'parameters': self._extract_function_params(func),
-                                'docstring': ast.get_docstring(func),
-                                'line_number': func.lineno
-                            }
+                    # Extract path from first argument
+                    if decorator.args and len(decorator.args) > 0:
+                        if isinstance(decorator.args[0], ast.Constant):
+                            path = decorator.args[0].value
+                        elif isinstance(decorator.args[0], ast.Str):  # Python 3.7 compatibility
+                            path = decorator.args[0].s
+                    
+                    if path:
+                        return {
+                            'method': method,
+                            'path': path,
+                            'function_name': func.name,
+                            'parameters': self._extract_function_params(func),
+                            'docstring': ast.get_docstring(func),
+                            'line_number': func.lineno,
+                            'file_path': str(self.file_path)
+                        }
+                
+                # Flask: @app.route("/path", methods=["GET"])
+                elif decorator.func.attr == 'route':
+                    path = None
+                    methods = ['GET']  # Default
+                    
+                    if decorator.args and len(decorator.args) > 0:
+                        if isinstance(decorator.args[0], ast.Constant):
+                            path = decorator.args[0].value
+                        elif isinstance(decorator.args[0], ast.Str):
+                            path = decorator.args[0].s
+                    
+                    # Extract methods from kwargs
+                    for keyword in decorator.keywords:
+                        if keyword.arg == 'methods':
+                            if isinstance(keyword.value, ast.List):
+                                methods = [
+                                    elt.value if isinstance(elt, ast.Constant) else elt.s
+                                    for elt in keyword.value.elts
+                                    if isinstance(elt, (ast.Constant, ast.Str))
+                                ]
+                    
+                    if path:
+                        return {
+                            'method': ', '.join(methods),
+                            'path': path,
+                            'function_name': func.name,
+                            'parameters': self._extract_function_params(func),
+                            'docstring': ast.get_docstring(func),
+                            'line_number': func.lineno,
+                            'file_path': str(self.file_path)
+                        }
         
         except Exception as e:
-            logger.debug(f"Error parsing decorator: {e}")
+            logger.error(f"Error parsing decorator in {self.file_path}: {e}")
         
         return None
     
@@ -172,7 +186,7 @@ class PythonParser(BaseParser):
     
     def extract_functions(self) -> List[Dict[str, any]]:
         """
-        Extract function definitions.
+        Extract function definitions (including async functions).
         
         Returns:
             List of function information
@@ -183,7 +197,8 @@ class PythonParser(BaseParser):
         functions = []
         
         for node in ast.walk(self.tree):
-            if isinstance(node, ast.FunctionDef):
+            # Check both sync and async functions
+            if isinstance(node, (ast.FunctionDef, ast.AsyncFunctionDef)):
                 # Skip methods (functions inside classes)
                 parent = None
                 for parent_node in ast.walk(self.tree):

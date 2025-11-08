@@ -99,6 +99,10 @@ class ReadmeGeneratorAgent:
         endpoints = code_analysis.get('endpoints', [])
         endpoints_summary = self._format_endpoints_summary(endpoints)
         
+        # Get endpoint statistics
+        endpoint_stats = code_analysis.get('endpoint_stats', {})
+        endpoint_stats_summary = self._format_endpoint_stats(endpoint_stats)
+        
         # Format code structure
         code_structure = self._format_code_structure(code_analysis)
         
@@ -115,6 +119,9 @@ class ReadmeGeneratorAgent:
         # Length guidelines
         length_guidelines = self._get_length_guidelines(length)
         
+        # Section-specific guidelines
+        section_guidelines = self._get_section_guidelines(sections)
+        
         return {
             'project_name': repo_info.get('name', 'Project'),
             'repo_url': repo_info.get('url', ''),
@@ -122,6 +129,7 @@ class ReadmeGeneratorAgent:
             'frameworks': ', '.join(analysis.get('frameworks', [])),
             'total_files': str(analysis.get('file_analysis', {}).get('total_files', 0)),
             'endpoint_count': str(len(endpoints)),
+            'endpoint_stats': endpoint_stats_summary,
             'endpoints_summary': endpoints_summary,
             'code_structure': code_structure,
             'length': length.value,
@@ -131,7 +139,8 @@ class ReadmeGeneratorAgent:
             'style': style.value.replace('_', ' ').title(),
             'custom_instructions': custom_instructions or 'None',
             'style_guidelines': style_guidelines,
-            'length_guidelines': length_guidelines
+            'length_guidelines': length_guidelines,
+            'section_guidelines': section_guidelines
         }
     
     def _format_endpoints_summary(self, endpoints: List[Dict[str, any]]) -> str:
@@ -140,19 +149,54 @@ class ReadmeGeneratorAgent:
             return "No API endpoints detected."
         
         summary = []
+        
+        # Add total count at the top
+        summary.append(f"**Total API Endpoints: {len(endpoints)}**\n")
+        
         for i, endpoint in enumerate(endpoints[:20], 1):  # Limit to 20
             method = endpoint.get('method', 'GET')
             path = endpoint.get('path', '/')
             func_name = endpoint.get('function_name', '')
             doc = endpoint.get('docstring', '')
+            file_path = endpoint.get('file_path', 'unknown')
+            line_num = endpoint.get('line_number', 0)
             
             summary.append(f"{i}. **{method} {path}**")
             summary.append(f"   - Function: `{func_name}`")
+            summary.append(f"   - Location: `{file_path}` (line {line_num})")
             if doc:
                 summary.append(f"   - Description: {doc.split(chr(10))[0]}")  # First line only
             summary.append("")
         
+        if len(endpoints) > 20:
+            summary.append(f"\n... and {len(endpoints) - 20} more endpoints")
+        
         return '\n'.join(summary)
+    
+    def _format_endpoint_stats(self, stats: Dict[str, any]) -> str:
+        """Format endpoint statistics for prompt."""
+        if not stats or stats.get('total', 0) == 0:
+            return "No endpoints detected"
+        
+        lines = []
+        lines.append(f"**Total Endpoints: {stats.get('total', 0)}**\n")
+        
+        # By HTTP method
+        by_method = stats.get('by_method', {})
+        if by_method:
+            lines.append("**By HTTP Method:**")
+            for method, count in sorted(by_method.items()):
+                lines.append(f"- {method}: {count}")
+            lines.append("")
+        
+        # By file
+        by_file = stats.get('by_file', {})
+        if by_file:
+            lines.append("**By File Location:**")
+            for file_path, count in sorted(by_file.items(), key=lambda x: x[1], reverse=True)[:10]:
+                lines.append(f"- `{file_path}`: {count} endpoint(s)")
+        
+        return '\n'.join(lines)
     
     def _format_code_structure(self, code_analysis: Dict[str, any]) -> str:
         """Format code structure information."""
@@ -161,8 +205,17 @@ class ReadmeGeneratorAgent:
         models = code_analysis.get('models', [])
         classes = code_analysis.get('classes', [])
         functions = code_analysis.get('functions', [])
+        endpoint_stats = code_analysis.get('endpoint_stats', {})
         
-        structure.append(f"- Total Endpoints: {len(code_analysis.get('endpoints', []))}")
+        # Endpoint breakdown
+        structure.append(f"- Total Endpoints: {endpoint_stats.get('total', 0)}")
+        
+        # By HTTP method
+        by_method = endpoint_stats.get('by_method', {})
+        if by_method:
+            for method, count in sorted(by_method.items()):
+                structure.append(f"  - {method}: {count}")
+        
         structure.append(f"- Data Models: {len(models)}")
         structure.append(f"- Classes: {len(classes)}")
         structure.append(f"- Functions: {len(functions)}")
@@ -230,6 +283,106 @@ class ReadmeGeneratorAgent:
 """
         }
         return guidelines.get(length, guidelines[ReadmeLength.MEDIUM])
+    
+    def _get_section_guidelines(self, sections: List[ReadmeSection]) -> str:
+        """Generate guidelines for selected sections only."""
+        section_instructions = {
+            ReadmeSection.OVERVIEW: """
+1. **Project Overview** (## Overview):
+   - Create a compelling introduction
+   - Explain what the project does
+   - Highlight the main purpose and value proposition
+   - Keep it concise but informative
+""",
+            ReadmeSection.FEATURES: """
+2. **Features** (## Features):
+   - List key features as bullet points
+   - Extract features from analyzed code and endpoints
+   - Use emojis for visual appeal
+   - Group related features together
+""",
+            ReadmeSection.INSTALLATION: """
+3. **Installation** (## Installation):
+   - Step-by-step installation instructions
+   - Include prerequisites
+   - Show command-line examples
+   - Cover different package managers if applicable
+""",
+            ReadmeSection.CONFIGURATION: """
+4. **Configuration** (## Configuration):
+   - Document environment variables
+   - Show configuration file examples
+   - Explain each configuration option
+   - Include default values
+""",
+            ReadmeSection.API_DOCUMENTATION: """
+5. **API Documentation** (## API Documentation):
+   - **START with API Statistics:**
+     * Total Endpoints: {endpoint_count}
+     * Breakdown by HTTP method (GET: X, POST: Y, PUT: Z, DELETE: W)
+     * Endpoints by file location
+   - **Then document EACH endpoint with:**
+     * HTTP method and path
+     * File location (filename and line number)
+     * Description
+     * Request parameters/body
+     * Response format
+     * Example request/response
+   - Group endpoints by file or functionality
+   - Use tables for better readability
+   - Include a summary table at the beginning with all endpoints
+""",
+            ReadmeSection.USAGE_EXAMPLES: """
+6. **Usage Examples** (## Usage Examples):
+   - Provide practical code examples
+   - Show common use cases
+   - Include request/response examples
+   - Add explanatory comments
+   - Use proper code formatting
+""",
+            ReadmeSection.ARCHITECTURE: """
+7. **Architecture** (## Architecture):
+   - Describe system architecture
+   - Explain component interactions
+   - Include architecture diagram if relevant
+   - Explain technology choices
+""",
+            ReadmeSection.CONTRIBUTING: """
+8. **Contributing** (## Contributing):
+   - Guidelines for contributors
+   - How to submit issues
+   - Pull request process
+   - Code style requirements
+""",
+            ReadmeSection.LICENSE: """
+9. **License** (## License):
+   - State the project license
+   - Include license badge
+   - Link to LICENSE file if exists
+""",
+            ReadmeSection.TROUBLESHOOTING: """
+10. **Troubleshooting** (## Troubleshooting):
+   - Common issues and solutions
+   - Error messages and fixes
+   - FAQ items
+   - Debug tips
+""",
+            ReadmeSection.FAQ: """
+11. **FAQ** (## FAQ):
+   - Frequently asked questions
+   - Clear Q&A format
+   - Cover common concerns
+"""
+        }
+        
+        guidelines = ["**GENERATE ONLY THESE SECTIONS IN THIS ORDER:**\n"]
+        for section in sections:
+            if section in section_instructions:
+                guidelines.append(section_instructions[section])
+        
+        guidelines.append("\n**DO NOT include any sections not listed above.**")
+        
+        return '\n'.join(guidelines)
     
     def _load_prompt_template(self) -> str:
         """Load the README generation prompt template."""
