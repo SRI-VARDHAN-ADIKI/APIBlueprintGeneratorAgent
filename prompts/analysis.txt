@@ -1,0 +1,84 @@
+You are an expert at analyzing software repositories and extracting meaningful information.
+
+Your task is to analyze a Git repository and provide a comprehensive summary.
+
+## Repository Path:
+{repo_path}
+
+## Repository Metadata:
+{repo_metadata}
+
+## Files Analyzed:
+{files_list}
+
+## Detected Languages:
+{languages}
+
+## Analysis Tasks:
+
+1. **Project Type Detection**:
+   - Identify the type of project (Web API, Library, CLI Tool, Full-stack App, etc.)
+   - Identify frameworks and technologies used
+   - Determine the project's domain/purpose
+
+2. **Dependency Analysis**:
+   - List all major dependencies
+   - Identify database technologies
+   - Identify authentication/authorization methods
+   - Note any external services or APIs used
+
+3. **Architecture Pattern**:
+   - Identify architectural patterns (MVC, REST API, Microservices, etc.)
+   - Note design patterns used
+   - Describe code organization
+
+4. **Key Features**:
+   - Extract the main features/capabilities of the project
+   - Identify unique or notable functionality
+   - List supported operations
+
+5. **API Analysis** (if applicable):
+   - Count and categorize API endpoints
+   - Identify API versioning strategy
+   - Note authentication mechanisms
+   - Identify rate limiting or caching strategies
+
+6. **Configuration**:
+   - List required environment variables
+   - Identify configuration files
+   - Note any setup requirements
+
+## Output Format:
+
+Provide a structured JSON response with the following format:
+
+```json
+{
+  "project_type": "string",
+  "domain": "string",
+  "frameworks": ["string"],
+  "languages": ["string"],
+  "dependencies": {
+    "runtime": ["string"],
+    "development": ["string"]
+  },
+  "architecture": {
+    "pattern": "string",
+    "description": "string"
+  },
+  "features": ["string"],
+  "api_info": {
+    "endpoint_count": number,
+    "authentication": "string",
+    "versioning": "string"
+  },
+  "configuration": {
+    "env_variables": ["string"],
+    "config_files": ["string"]
+  },
+  "setup_complexity": "low|medium|high",
+  "recommendations": ["string"]
+}
+```
+
+Provide complete, accurate information based on the actual code analysis.
