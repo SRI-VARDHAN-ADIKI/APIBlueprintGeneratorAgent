@@ -1,0 +1,200 @@
+{
+  "$schema": "http://json-schema.org/draft-07/schema#",
+  "title": "API Blueprint Generator Agent Output Schema",
+  "description": "Output schema for generated README documentation and metadata",
+  "type": "object",
+  "required": ["job_id", "status", "readme_content"],
+  "properties": {
+    "job_id": {
+      "type": "string",
+      "description": "Unique identifier for the generation job",
+      "examples": ["e84e5f06-9343-42c6-a8ca-1943411364c8"]
+    },
+    "status": {
+      "type": "string",
+      "enum": ["pending", "cloning", "analyzing", "parsing", "generating", "completed", "failed"],
+      "description": "Current status of the README generation process"
+    },
+    "repository_info": {
+      "type": "object",
+      "description": "Extracted repository information",
+      "properties": {
+        "name": {
+          "type": "string",
+          "description": "Repository name"
+        },
+        "url": {
+          "type": "string",
+          "format": "uri",
+          "description": "Repository URL"
+        },
+        "languages": {
+          "type": "array",
+          "items": {
+            "type": "string"
+          },
+          "description": "Programming languages detected in the repository"
+        },
+        "frameworks": {
+          "type": "array",
+          "items": {
+            "type": "string"
+          },
+          "description": "Frameworks and libraries detected"
+        },
+        "total_files": {
+          "type": "integer",
+          "description": "Total number of source files analyzed"
+        },
+        "total_lines": {
+          "type": "integer",
+          "description": "Total lines of code"
+        },
+        "endpoints_found": {
+          "type": "integer",
+          "description": "Number of API endpoints detected"
+        }
+      }
+    },
+    "readme_content": {
+      "type": "object",
+      "description": "Generated README content and metadata",
+      "required": ["content", "sections", "word_count", "line_count"],
+      "properties": {
+        "content": {
+          "type": "string",
+          "description": "Full README content in Markdown format"
+        },
+        "sections": {
+          "type": "array",
+          "items": {
+            "type": "string"
+          },
+          "description": "List of sections included in the README"
+        },
+        "word_count": {
+          "type": "integer",
+          "description": "Total word count of the README",
+          "minimum": 0
+        },
+        "line_count": {
+          "type": "integer",
+          "description": "Total line count of the README",
+          "minimum": 0
+        },
+        "diagrams": {
+          "type": "array",
+          "description": "Generated MermaidJS diagrams",
+          "items": {
+            "type": "object",
+            "properties": {
+              "type": {
+                "type": "string",
+                "description": "Diagram type (e.g., 'architecture', 'sequence', 'flowchart')"
+              },
+              "title": {
+                "type": "string",
+                "description": "Diagram title"
+              },
+              "mermaid_code": {
+                "type": "string",
+                "description": "MermaidJS diagram code"
+              }
+            }
+          }
+        }
+      }
+    },
+    "endpoints": {
+      "type": "array",
+      "description": "List of detected API endpoints",
+      "items": {
+        "type": "object",
+        "properties": {
+          "method": {
+            "type": "string",
+            "enum": ["GET", "POST", "PUT", "PATCH", "DELETE", "OPTIONS", "HEAD"],
+            "description": "HTTP method"
+          },
+          "path": {
+            "type": "string",
+            "description": "Endpoint path"
+          },
+          "description": {
+            "type": "string",
+            "description": "Endpoint description"
+          },
+          "file_path": {
+            "type": "string",
+            "description": "Source file containing this endpoint"
+          },
+          "line_number": {
+            "type": "integer",
+            "description": "Line number in source file"
+          }
+        }
+      }
+    },
+    "file_name": {
+      "type": "string",
+      "description": "Generated README filename",
+      "default": "README.md"
+    },
+    "file_size_bytes": {
+      "type": "integer",
+      "description": "Size of generated README file in bytes",
+      "minimum": 0
+    },
+    "download_url": {
+      "type": "string",
+      "format": "uri",
+      "description": "URL to download the generated README"
+    },
+    "created_at": {
+      "type": "string",
+      "format": "date-time",
+      "description": "Timestamp when the job was created"
+    },
+    "completed_at": {
+      "type": "string",
+      "format": "date-time",
+      "description": "Timestamp when the job completed"
+    },
+    "error": {
+      "type": "string",
+      "description": "Error message if status is 'failed'"
+    }
+  },
+  "examples": [
+    {
+      "job_id": "e84e5f06-9343-42c6-a8ca-1943411364c8",
+      "status": "completed",
+      "repository_info": {
+        "name": "fastapi-example",
+        "url": "https://github.com/user/fastapi-example",
+        "languages": ["Python"],
+        "frameworks": ["FastAPI", "Pydantic"],
+        "total_files": 25,
+        "total_lines": 3450,
+        "endpoints_found": 12
+      },
+      "readme_content": {
+        "content": "# FastAPI Example\n\n## Overview\n...",
+        "sections": ["overview", "installation", "api_documentation"],
+        "word_count": 1250,
+        "line_count": 320,
+        "diagrams": [
+          {
+            "type": "architecture",
+            "title": "System Architecture",
+            "mermaid_code": "graph TD\n  A[Client] --> B[FastAPI]\n  B --> C[Database]"
+          }
+        ]
+      },
+      "file_name": "README.md",
+      "file_size_bytes": 15360,
+      "created_at": "2025-11-08T10:30:00Z",
+      "completed_at": "2025-11-08T10:32:15Z"
+    }
+  ]
+}

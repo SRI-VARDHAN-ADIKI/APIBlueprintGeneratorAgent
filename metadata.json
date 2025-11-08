@@ -1,0 +1,46 @@
+{
+  "agent_name": "API Blueprint Generator Agent",
+  "version": "1.0.0",
+  "description": "AI-powered automated agent that generates professional README documentation and API blueprints directly from GitHub repositories. Uses AST parsing, Google Gemini 2.0 Flash AI, and MermaidJS for intelligent code analysis and diagram generation.",
+  "author": "SRI-VARDHAN-ADIKI",
+  "category": "Documentation & DevOps",
+  "tags": [
+    "readme-generator",
+    "api-documentation",
+    "ast-parsing",
+    "ai-documentation",
+    "mermaid-diagrams",
+    "code-analysis",
+    "devops",
+    "automation"
+  ],
+  "runtime": "python",
+  "python_version": "3.11+",
+  "entry_point": "app.py",
+  "framework": "FastAPI",
+  "ui_framework": "Streamlit",
+  "ai_model": "Google Gemini 2.0 Flash",
+  "api_type": "REST",
+  "capabilities": [
+    "GitHub repository analysis",
+    "Automatic endpoint extraction",
+    "Multi-section README generation",
+    "Customizable documentation length",
+    "MermaidJS diagram generation",
+    "Tech stack detection",
+    "Code structure analysis",
+    "AST-based parsing"
+  ],
+  "use_cases": [
+    "Automated API documentation",
+    "README generation for open-source projects",
+    "Quick project documentation for startups",
+    "Standardized documentation across teams",
+    "Legacy codebase documentation"
+  ],
+  "license": "MIT",
+  "repository": "https://github.com/SRI-VARDHAN-ADIKI/APIBlueprintGeneratorAgent",
+  "documentation_url": "https://github.com/SRI-VARDHAN-ADIKI/APIBlueprintGeneratorAgent#readme",
+  "created_at": "2025-11-08",
+  "last_updated": "2025-11-08"
+}

@@ -1,0 +1,89 @@
+{
+  "$schema": "http://json-schema.org/draft-07/schema#",
+  "title": "API Blueprint Generator Agent Input Schema",
+  "description": "Input schema for generating README documentation from GitHub repositories",
+  "type": "object",
+  "required": ["repo_url"],
+  "properties": {
+    "repo_url": {
+      "type": "string",
+      "format": "uri",
+      "description": "GitHub, GitLab, or Bitbucket repository URL",
+      "examples": [
+        "https://github.com/username/repository",
+        "https://gitlab.com/username/project",
+        "https://bitbucket.org/username/repo"
+      ],
+      "pattern": "^https://(github\\.com|gitlab\\.com|bitbucket\\.org)/.+/.+$"
+    },
+    "length": {
+      "type": "string",
+      "enum": ["short", "medium", "detailed"],
+      "default": "medium",
+      "description": "Desired README length: short (100-200 lines), medium (200-400 lines), detailed (400+ lines)"
+    },
+    "sections": {
+      "type": "array",
+      "items": {
+        "type": "string",
+        "enum": [
+          "overview",
+          "features",
+          "installation",
+          "configuration",
+          "api_documentation",
+          "usage_examples",
+          "architecture",
+          "contributing",
+          "license",
+          "troubleshooting",
+          "faq"
+        ]
+      },
+      "default": ["overview", "installation", "api_documentation", "usage_examples"],
+      "minItems": 1,
+      "description": "List of sections to include in the generated README"
+    },
+    "include_examples": {
+      "type": "boolean",
+      "default": true,
+      "description": "Whether to include code examples in the README"
+    },
+    "diagram_complexity": {
+      "type": "string",
+      "enum": ["simple", "detailed"],
+      "default": "detailed",
+      "description": "Complexity level of generated MermaidJS diagrams"
+    },
+    "style": {
+      "type": "string",
+      "enum": ["technical", "beginner_friendly", "comprehensive"],
+      "default": "technical",
+      "description": "Documentation writing style and tone"
+    },
+    "custom_instructions": {
+      "type": "string",
+      "description": "Optional custom instructions for README generation (e.g., 'Focus on security aspects', 'Include Docker deployment steps')",
+      "maxLength": 500
+    }
+  },
+  "examples": [
+    {
+      "repo_url": "https://github.com/fastapi/fastapi",
+      "length": "detailed",
+      "sections": ["overview", "features", "installation", "api_documentation", "usage_examples", "contributing"],
+      "include_examples": true,
+      "diagram_complexity": "detailed",
+      "style": "technical"
+    },
+    {
+      "repo_url": "https://github.com/starter-project/simple-api",
+      "length": "short",
+      "sections": ["overview", "installation", "usage_examples"],
+      "include_examples": true,
+      "diagram_complexity": "simple",
+      "style": "beginner_friendly",
+      "custom_instructions": "Focus on getting started quickly"
+    }
+  ]
+}
