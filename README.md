@@ -65,7 +65,7 @@
 
 1. **Clone the repository:**
    ```bash
-   git clone https://github.com/tanojrahul/Readme_Generator_Agent.git
+   git clone [https://github.com/tanojrahul/Readme_Generator_Agent.git](https://github.com/SRI-VARDHAN-ADIKI/APIBlueprintGeneratorAgent.git)
    cd Readme_Generator_Agent
    ```
 
