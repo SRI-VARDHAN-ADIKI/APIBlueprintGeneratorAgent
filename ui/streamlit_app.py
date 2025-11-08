@@ -13,7 +13,7 @@ API_BASE_URL = "http://localhost:8000/api"
 # Page configuration
 st.set_page_config(
     page_title="README Generator Agent",
-    page_icon="📝",
+    page_icon="",
     layout="wide",
     initial_sidebar_state="expanded"
 )
@@ -122,7 +122,7 @@ def main():
     """Main Streamlit application."""
     
     # Header
-    st.markdown('<div class="main-header">📝 README Generator Agent</div>', unsafe_allow_html=True)
+    st.markdown('<div class="main-header">README Generator Agent</div>', unsafe_allow_html=True)
     st.markdown('<div class="sub-header">AI-Powered API Documentation & README Generator</div>', unsafe_allow_html=True)
     
     # Check API health
@@ -133,7 +133,7 @@ def main():
     
     # Sidebar configuration
     with st.sidebar:
-        st.header("⚙️ Configuration")
+        st.header("Configuration")
         
         # Repository URL
         repo_url = st.text_input(
@@ -207,7 +207,7 @@ def main():
         st.markdown("---")
         
         # Generate button
-        generate_button = st.button("🚀 Generate README", type="primary", use_container_width=True)
+        generate_button = st.button("Generate README", type="primary", use_container_width=True)
     
     # Main content area
     if generate_button:
@@ -243,7 +243,7 @@ def main():
         job_id = st.session_state['job_id']
         
         st.markdown("---")
-        st.header("📊 Generation Progress")
+        st.header("Generation Progress")
         
         # Progress tracking
         progress_container = st.container()
@@ -272,7 +272,7 @@ def main():
                         break
                     elif job_status == 'failed':
                         error = status.get('error', 'Unknown error')
-                        st.error(f"❌ Generation failed: {error}")
+                        st.error(f"Generation failed: {error}")
                         break
                 
                 time.sleep(5)
@@ -280,7 +280,7 @@ def main():
             # Show preview if completed
             if status and status.get('status') == 'completed':
                 st.markdown("---")
-                st.header("📄 README Preview")
+                st.header("README Preview")
                 
                 preview_data = get_preview(job_id)
                 
