@@ -67,7 +67,7 @@
    ```bash
    git clone https://github.com/SRI-VARDHAN-ADIKI/APIBlueprintGeneratorAgent.git
    
-   cd Readme_Generator_Agent
+   cd API_BLUEPRINT_README_GENERATOR_AGENT
    ```
 
 2. **Create virtual environment:**
